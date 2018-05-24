@@ -59,9 +59,15 @@ def format_insn(insn):
     mnemonic = insn.mnemonic
     args = insn.op_str.split(", ")
     args = [ format_arg(arg) for arg in args ]
-    if mnemonic == "repe cmpsb":
-        mnemonic = "repz"
-        args = ["cmpsb"]
+    if " " in mnemonic:
+        parts = mnemonic.split(" ")
+        if parts[0].startswith("rep"):
+            mnemonic = parts[0]
+            args = parts[1:]
+            if mnemonic == "repe" and args[0].startswith("cmps"):
+                mnemonic = "repz"
+        elif parts[0] == "lock":
+            mnemonic = parts[1] # strip lock prefix for now
     return "%s\t%s" % (mnemonic, ",".join(args))
 
 def format_state(cpu):
@@ -94,7 +100,7 @@ if __name__ == '__main__':
     #    context['count'] = 0
 
     last_rip = None
-    rep = [ "repz", "repnz", "repe", "repne" ]
+    rep = [ "rep", "repz", "repnz", "repe", "repne" ]
 
     @m.hook(None)
     def explore(state):

@@ -69,6 +69,10 @@ class CpuState(object):
 		if lines[0] != "----------------" or \
 				not lines[1].startswith("IN:"):
 			raise Exception("Not a cpu state!")
+		if len(lines[1]) > 4:
+			self.func = lines[1][3:].strip()
+		else:
+			self.func = ""
 		self.disasm = ":".join(lines[2].split(":")[1:]).strip()
 		self.mnemonic = self.disasm.split("\t")[0]
 		self.asm = parse_insn(self.disasm)
@@ -267,7 +271,6 @@ XMM14=%032x%sXMM15=%032x%s          XMM14=%032x%sXMM15=%032x%s""" % \
 			self.xmm14, xmm14_match, self.xmm15, xmm15_match, other.xmm14, xmm14_match, other.xmm15, xmm15_match))
 
 	def full_diff(self, other, use_color=True):
-		loc = ""
 		disas = ("0x%08x:\t%s" % (self.rip, self.disasm)).expandtabs(8)
 		space_cnt = 88 - len(disas)
 		spaces = " " * space_cnt if space_cnt > 0 else " "
@@ -278,17 +281,16 @@ IN: %s
 0x%08x:\t%s%s%s
 
 %s
-""" % (loc, self.rip, self.disasm, spaces, disas_other, self.diff(other,
+""" % (self.func, self.rip, self.disasm, spaces, disas_other, self.diff(other,
 		use_color))
 
 	def __str__(self):
-		loc = ""
 		return """----------------
 IN: %s
 0x%08x:\t%s
 
 %s
-""" % (loc, self.rip, self.disasm, self.format_state())
+""" % (self.func, self.rip, self.disasm, self.format_state())
 
 def get_base(rip):
 	return rip & ~0xFFF
